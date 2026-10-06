@@ -80,9 +80,10 @@
   </header>
 
   <!-- Workspace Container: 3 Columns -->
-  <main class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 max-w-[1700px] w-full mx-auto">
-    <!-- Cột đề bài -->
-    <section class="lg:col-span-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-xl">
+  <main class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 max-w-[1700px] w-full mx-auto" style="height: calc(100vh - 65px);">
+    
+    <!-- Cột 1: Đề bài (3 cols) -->
+    <section class="lg:col-span-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-xl overflow-y-auto">
       <div class="space-y-4 text-xs">
         <div class="flex items-center space-x-2 pb-3 border-b border-slate-800 text-indigo-400">
           <i data-lucide="book-open" class="w-4 h-4"></i>
@@ -115,8 +116,8 @@
       </div>
     </section>
 
-    <!-- Cột Editor & Terminal -->
-    <section class="lg:col-span-5 flex flex-col space-y-4">
+    <!-- Cột 2: Editor & Terminal (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col space-y-4 h-full">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl flex-1 flex flex-col overflow-hidden shadow-xl">
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-2 flex items-center justify-between">
           <span class="text-xs font-mono font-bold text-slate-300">solution.py</span>
@@ -134,11 +135,13 @@
       </div>
     </section>
 
-    <!-- Cột Trợ lý Socratic AI -->
-    <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl">
+    <!-- Cột 3: Trợ lý Socratic AI & Khung Chat 2 Chiều (4 cols) -->
+    <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl h-full">
+      
+      <!-- Tutor Header -->
       <div class="bg-indigo-950/40 border-b border-slate-800 p-3.5 flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+          <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
             <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
           </div>
           <div>
@@ -147,16 +150,44 @@
           </div>
         </div>
       </div>
+
+      <!-- Chat History -->
       <div id="chatHistory" class="flex-1 p-3.5 overflow-y-auto space-y-3 bg-slate-950/50 text-xs">
-        <div class="p-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-slate-300">
-          Chào em! Thầy AI đã sẵn sàng. Hãy bấm <b>"Chạy chương trình"</b>, nếu vướng lỗi thầy sẽ gợi ý từng bước!
+        <div class="flex items-start space-x-2">
+          <div class="w-6 h-6 rounded-full bg-indigo-600/80 flex items-center justify-center text-white text-[10px] flex-shrink-0 mt-0.5">
+            AI
+          </div>
+          <div class="bg-slate-800/90 border border-slate-700/80 p-2.5 rounded-xl rounded-tl-none text-slate-300 leading-relaxed">
+            Chào em! Thầy AI đã sẵn sàng. Hãy bấm <b>"Chạy chương trình"</b>, nếu vướng lỗi thầy sẽ gợi ý từng bước!
+          </div>
         </div>
       </div>
+
+      <!-- Nút Gợi Ý Nhanh & Khung Nhập Tin Nhắn -->
+      <div class="p-3 border-t border-slate-800 bg-slate-900 space-y-2">
+        <div class="flex space-x-1.5 overflow-x-auto pb-1 text-[11px]">
+          <button onclick="askQuickQuestion('Giải thích lỗi vừa gặp?')" class="whitespace-nowrap px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700">
+            💡 Giải thích lỗi vừa gặp?
+          </button>
+          <button onclick="askQuickQuestion('Cho em câu hỏi gợi ý bước tiếp theo?')" class="whitespace-nowrap px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700">
+            ❓ Gợi ý bước tiếp theo?
+          </button>
+        </div>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="studentChatInput" placeholder="Nhập câu hỏi với Trợ lý AI..."
+                 class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                 onkeydown="if(event.key === 'Enter') sendStudentChat()" />
+          <button onclick="sendStudentChat()" class="p-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition shadow-md shadow-indigo-600/20">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
     </section>
   </main>
 
   <script>
-    // THÔNG SỐ CẤU HÌNH TỰ ĐỘNG DÁN TỪ FIREBASE CỦA BẠN
+    // CẤU HÌNH THÔNG SỐ TỰ ĐỘNG DÁN TỪ FIREBASE CỦA BẠN
     const firebaseConfig = {
       apiKey: "AIzaSyCndekhMOZCL9MUFGBE6F7z3P6rNI805ew",
       authDomain: "codementor-ai-f614a.firebaseapp.com",
@@ -174,6 +205,7 @@
     let studentName = "";
     let failCount = 0;
     let dbRef = null;
+    let lastErrorMsg = null;
 
     const defaultBuggyCode = `# Bài toán: Tính tổng các số chẵn từ 1 đến N\nn = 10\ntong = 0\nfor i in range(1, n + 1)\n    if i % 2 == 0:\n        tong += i\nprint("Tong la:", tong)`;
 
@@ -248,6 +280,7 @@
       const code = document.getElementById("codeEditor").value;
       const consoleEl = document.getElementById("outputConsole");
       consoleEl.innerText = "Đang chạy chương trình...\n";
+      lastErrorMsg = null;
 
       Sk.configure({
         output: text => consoleEl.innerText += text,
@@ -264,11 +297,12 @@
           if (dbRef) {
             dbRef.update({ status: "success", failCount: 0, error: null, code: code });
           }
-          appendBotMessage("Tuyệt vời! Đoạn mã chạy thành công và không có lỗi cú pháp.");
+          appendBotMessage("Tuyệt vời! Đoạn mã chạy thành công và không có lỗi cú pháp. Em hãy so sánh kết quả trên Terminal với yêu cầu bài toán nhé!");
         })
         .catch(err => {
           const errMsg = err.toString();
           consoleEl.innerText += "\n[LỖI]: " + errMsg;
+          lastErrorMsg = errMsg;
           failCount += 1;
 
           let aiHint = "Em hãy kiểm tra lại dấu hai chấm (:) ở cuối câu lệnh lặp hoặc điều kiện.";
@@ -285,17 +319,74 @@
             });
           }
 
-          appendBotMessage(`⚠️ <b>Phát hiện lỗi cú pháp:</b><br>${errMsg}<br><br>💡 <i>Gợi mở Socratic: ${aiHint}</i>`);
+          appendBotMessage(`⚠️️ <b>Phát hiện lỗi cú pháp:</b><br>${errMsg}<br><br>💡 <i>Gợi mở Socratic: ${aiHint}</i>`);
         });
+    }
+
+    function askQuickQuestion(type) {
+      if (!lastErrorMsg) {
+        appendUserMessage(type);
+        setTimeout(() => {
+          appendBotMessage("Hiện tại code của em chưa phát sinh lỗi nào. Em hãy bấm <b>'Chạy chương trình'</b> để thử nghiệm nhé!");
+        }, 300);
+        return;
+      }
+      appendUserMessage(type);
+      setTimeout(() => {
+        if (lastErrorMsg.includes("bad input") || lastErrorMsg.includes("SyntaxError")) {
+          appendBotMessage("Trong Python, khi kết thúc khai báo vòng lặp <code>for</code> hoặc <code>if</code>, em cần có dấu hai chấm <code>:</code> để báo cho máy tính biết phần lệnh con bắt đầu từ đâu. Em hãy quan sát xem dòng for của mình đã có dấu này chưa nhé!");
+        } else {
+          appendBotMessage(`Lỗi <code>${lastErrorMsg.split("\n")[0]}</code> thường xảy ra do câu lệnh hoặc tên biến chưa đúng chuẩn. Em hãy rà soát lại dòng lệnh báo lỗi nhé!`);
+        }
+      }, 400);
+    }
+
+    function sendStudentChat() {
+      const input = document.getElementById("studentChatInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendUserMessage(text);
+      input.value = "";
+
+      const lower = text.toLowerCase();
+      setTimeout(() => {
+        if (lower.includes("giải giùm") || lower.includes("sửa hộ") || lower.includes("cho em code")) {
+          appendBotMessage("Thầy không thể viết sẵn code cho em được, vì mục tiêu là giúp em rèn luyện kỹ năng lập trình! Thầy tin em làm được. Hãy thử thêm dấu hai chấm <code>:</code> vào sau lệnh <code>for</code> rồi bấm lại nút <b>Chạy chương trình</b> nhé!");
+        } else {
+          appendBotMessage("Thầy hiểu ý em rồi! Em hãy thử rà soát lại cấu trúc các dòng lệnh và thụt đầu dòng (khoảng 4 dấu cách), sau đó chạy lại xem kết quả nhé.");
+        }
+      }, 500);
+    }
+
+    function appendUserMessage(text) {
+      const chat = document.getElementById("chatHistory");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "flex items-start justify-end space-x-2";
+      msgDiv.innerHTML = `
+        <div class="bg-indigo-600 text-white p-2.5 rounded-xl rounded-tr-none text-xs leading-relaxed max-w-[85%]">
+          ${text}
+        </div>
+      `;
+      chat.appendChild(msgDiv);
+      chat.scrollTop = chat.scrollHeight;
     }
 
     function appendBotMessage(html) {
       const chat = document.getElementById("chatHistory");
       const msgDiv = document.createElement("div");
-      msgDiv.className = "p-2.5 rounded-xl bg-slate-800/90 border border-slate-700 text-slate-300";
-      msgDiv.innerHTML = html;
+      msgDiv.className = "flex items-start space-x-2";
+      msgDiv.innerHTML = `
+        <div class="w-6 h-6 rounded-full bg-indigo-600/80 flex items-center justify-center text-white text-[10px] flex-shrink-0 mt-0.5">
+          AI
+        </div>
+        <div class="bg-slate-800/90 border border-slate-700/80 p-2.5 rounded-xl rounded-tl-none text-slate-300 leading-relaxed max-w-[90%]">
+          ${html}
+        </div>
+      `;
       chat.appendChild(msgDiv);
       chat.scrollTop = chat.scrollHeight;
+      lucide.createIcons();
     }
   </script>
 </body>
