@@ -112,7 +112,7 @@
     </div>
   </header>
 
-  <!-- Workspace Container: Khóa cứng chiều cao 100vh không trôi cuộn -->
+  <!-- Workspace Container -->
   <main class="flex-1 p-3 grid grid-cols-1 lg:grid-cols-12 gap-3 max-w-[1800px] w-full mx-auto min-h-0 overflow-hidden">
     
     <!-- CỘT 1: ĐỀ BÀI (3 cols) -->
@@ -154,7 +154,7 @@
       </div>
     </section>
 
-    <!-- CỘT 2: EDITOR & KHUNG STEM SIMULATOR / TERMINAL (5 cols) -->
+    <!-- CỘT 2: EDITOR & STEM SIMULATOR / TERMINAL (5 cols) -->
     <section class="lg:col-span-5 flex flex-col space-y-3 h-full min-h-0 overflow-hidden">
       <!-- Editor Box -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl flex-1 flex flex-col overflow-hidden shadow-xl min-h-0">
@@ -171,7 +171,7 @@
         </div>
       </div>
 
-      <!-- KHUNG STEM 1: MÔ HÌNH ĐÈN GIAO THÔNG -->
+      <!-- KHUNG STEM 1: ĐÈN GIAO THÔNG -->
       <div id="stemTrafficBox" class="h-44 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0 hidden">
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
           <div class="flex items-center space-x-2">
@@ -208,7 +208,7 @@
         </div>
       </div>
 
-      <!-- KHUNG STEM 2: MÔ HÌNH MÃ MORSE SOS -->
+      <!-- KHUNG STEM 2: MÃ MORSE SOS -->
       <div id="stemMorseBox" class="h-44 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0 hidden">
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
           <div class="flex items-center space-x-2">
@@ -237,7 +237,7 @@
         </div>
       </div>
 
-      <!-- Terminal Output Cố định chiều cao (Khi làm bài thuật toán thông thường) -->
+      <!-- Terminal Output (Cho bài thuật toán) -->
       <div id="terminalBox" class="h-40 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0">
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
           <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Terminal & Kết quả Testcase</span>
@@ -246,7 +246,7 @@
       </div>
     </section>
 
-    <!-- CỘT 3: TRỢ LÝ SOCRATIC AI (4 cols) - CỐ ĐỊNH HOÀN TOÀN KHÔNG BỊ TRÔI -->
+    <!-- CỘT 3: TRỢ LÝ SOCRATIC AI (4 cols) -->
     <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-full overflow-hidden shadow-xl min-h-0">
       <div class="bg-indigo-950/40 border-b border-slate-800 p-3 flex items-center justify-between flex-shrink-0">
         <div class="flex items-center space-x-2">
@@ -260,7 +260,6 @@
         </div>
       </div>
 
-      <!-- Vùng tin nhắn tự cuộn nội bộ -->
       <div id="chatHistory" class="flex-1 p-3 overflow-y-auto space-y-2.5 bg-slate-950/50 text-xs min-h-0">
         <div class="flex items-start space-x-2">
           <div class="w-6 h-6 rounded-full bg-indigo-600/80 flex items-center justify-center text-white text-[10px] flex-shrink-0 mt-0.5">AI</div>
@@ -270,7 +269,6 @@
         </div>
       </div>
 
-      <!-- Nút gợi ý nhanh & Ô gõ tin nhắn -->
       <div class="p-2.5 border-t border-slate-800 bg-slate-900 space-y-2 flex-shrink-0">
         <div class="flex space-x-1.5 overflow-x-auto pb-1 text-[11px]">
           <button onclick="askQuickPrompt('explain')" class="whitespace-nowrap px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700">
@@ -306,38 +304,7 @@
     };
     firebase.initializeApp(firebaseConfig);
 
-    // BỘ BÀI TẬP MẶC ĐỊNH PHÒNG KHI FIREBASE CHƯA CÓ
-    const defaultAssignments = [
-      {
-        id: "task_1",
-        type: "algorithm",
-        title: "Bài 1: Tính tổng số chẵn từ 1 đến N",
-        desc: "Viết chương trình tính tổng tất cả các số nguyên chẵn trong phạm vi từ 1 đến N (với N = 10). In ra giá trị tổng.",
-        sample: "N = 10 ➔ Kết quả: 30",
-        expectedOutput: "30",
-        template: "# Bài 1: Tính tổng số chẵn từ 1 đến N\nn = 10\ntong = 0\nfor i in range(1, n + 1):\n    if i % 2 == 0:\n        tong += i\nprint(tong)"
-      },
-      {
-        id: "task_2",
-        type: "algorithm",
-        title: "Bài 2: Đếm số lượng ước của N",
-        desc: "Viết chương trình đếm xem số nguyên N = 12 có bao nhiêu ước số nguyên dương. In ra số lượng ước.",
-        sample: "N = 12 (ước: 1, 2, 3, 4, 6, 12) ➔ Kết quả: 6",
-        expectedOutput: "6",
-        template: "# Bài 2: Đếm số ước của N\nn = 12\ndem = 0\n# Viết tiếp vòng lặp tại đây...\nprint(dem)"
-      },
-      {
-        id: "task_3",
-        type: "stem_traffic",
-        title: "Bài 3: [STEM] Điều khiển Trạm Đèn Giao Thông",
-        desc: "Dự án STEM: Vận dụng logic tuần tự và trễ thời gian để mô phỏng chu kỳ đèn giao thông ngã tư: Bật ĐỎ (3s) ➔ Bật VÀNG (1s) ➔ Bật XANH (3s).",
-        sample: "Đỏ sáng ➔ Vàng sáng ➔ Xanh sáng (Lặp lại)",
-        expectedOutput: "STEM_PASSED",
-        template: "# DỰ ÁN STEM: ĐIỀU KHIỂN ĐÈN GIAO THÔNG\n# Các hàm có sẵn: led_red.on(), led_yellow.on(), led_green.on()\n# led_all_off(), sleep(giây)\n\nled_all_off()\n\n# 1. Bật đèn Đỏ sáng 3 giây\nled_red.on()\nsleep(3)\n\n# 2. Chuyển sang đèn Vàng 1 giây (Học sinh viết tiếp tại đây):\n\n\n# 3. Chuyển sang đèn Xanh 3 giây (Học sinh viết tiếp tại đây):\n\n\nprint('STEM_PASSED')"
-      }
-    ];
-
-    let assignments = [...defaultAssignments];
+    let assignments = [];
     let currentTaskIndex = 0;
     let pcId = null;
     let studentName = "";
@@ -370,15 +337,16 @@
       });
     }
 
+    // Nhận danh sách bài tập từ Firebase
     function listenAssignments() {
       firebase.database().ref("assignments").on("value", snapshot => {
         const data = snapshot.val();
         if (data && Array.isArray(data) && data.length > 0) {
           assignments = data;
+          initTasksState();
+          renderTaskList();
+          loadTask(currentTaskIndex);
         }
-        initTasksState();
-        renderTaskList();
-        loadTask(currentTaskIndex);
       });
     }
 
@@ -395,6 +363,15 @@
       });
     }
 
+    // Nhận diện loại bài tập thông minh
+    function getTaskType(task) {
+      if (task.type) return task.type;
+      const lower = (task.title + " " + task.desc).toLowerCase();
+      if (lower.includes("morse") || lower.includes("sos")) return "stem_morse";
+      if (lower.includes("đèn giao thông") || lower.includes("traffic")) return "stem_traffic";
+      return "algorithm";
+    }
+
     function renderTaskList() {
       const container = document.getElementById("taskTabList");
       container.innerHTML = "";
@@ -402,7 +379,8 @@
       assignments.forEach((task, idx) => {
         const isSelected = idx === currentTaskIndex;
         const isPassed = studentTasksState[task.id]?.passed;
-        const isStem = task.type === "stem" || task.type === "stem_traffic" || task.type === "stem_morse";
+        const type = getTaskType(task);
+        const isStem = type.startsWith("stem");
 
         const btn = document.createElement("button");
         btn.onclick = () => switchTask(idx);
@@ -430,8 +408,10 @@
     }
 
     function switchTask(idx) {
-      const currentTask = assignments[currentTaskIndex];
-      studentTasksState[currentTask.id].code = document.getElementById("codeEditor").value;
+      if (assignments[currentTaskIndex]) {
+        const curId = assignments[currentTaskIndex].id;
+        studentTasksState[curId].code = document.getElementById("codeEditor").value;
+      }
 
       currentTaskIndex = idx;
       renderTaskList();
@@ -440,6 +420,8 @@
 
     function loadTask(idx) {
       const task = assignments[idx];
+      if (!task) return;
+
       document.getElementById("taskTitle").innerText = task.title;
       document.getElementById("taskDesc").innerText = task.desc;
       document.getElementById("taskSample").innerText = task.sample;
@@ -456,13 +438,15 @@
       morseBox.classList.add("hidden");
       terminalBox.classList.add("hidden");
 
-      if (task.type === "stem" || task.type === "stem_traffic") {
+      const type = getTaskType(task);
+
+      if (type === "stem_traffic" || type === "stem") {
         trafficBox.classList.remove("hidden");
         typeBadge.innerText = "DỰ ÁN STEM";
         typeBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30";
         engineBadge.innerText = "Virtual Traffic Simulator";
         resetLeds();
-      } else if (task.type === "stem_morse") {
+      } else if (type === "stem_morse") {
         morseBox.classList.remove("hidden");
         typeBadge.innerText = "DỰ ÁN STEM";
         typeBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30";
@@ -481,8 +465,9 @@
       studentTasksState[task.id].code = task.template;
       document.getElementById("codeEditor").value = task.template;
       appendBotMessage(`Thầy đã khôi phục lại mã mẫu cho <b>${task.title.split(":")[0]}</b>.`);
-      if (task.type === "stem" || task.type === "stem_traffic") resetLeds();
-      if (task.type === "stem_morse") resetMorse();
+      const type = getTaskType(task);
+      if (type === "stem" || type === "stem_traffic") resetLeds();
+      if (type === "stem_morse") resetMorse();
     }
 
     function confirmStudentLogin() {
@@ -504,13 +489,15 @@
     function notifyTyping() {
       clearTimeout(typingTimer);
       typingTimer = setTimeout(() => {
-        const curId = assignments[currentTaskIndex].id;
-        studentTasksState[curId].code = document.getElementById("codeEditor").value;
-        syncToFirebase("coding");
+        if (assignments[currentTaskIndex]) {
+          const curId = assignments[currentTaskIndex].id;
+          studentTasksState[curId].code = document.getElementById("codeEditor").value;
+          syncToFirebase("coding");
+        }
       }, 1000);
     }
 
-    // ĐIỀU KHIỂN STEM 1: ĐÈN GIAO THÔNG
+    // ĐÈN GIAO THÔNG
     function resetLeds() {
       document.getElementById("ledRed").className = "w-10 h-10 rounded-full bg-red-950 border-2 border-red-900 led-light flex items-center justify-center font-bold text-[10px] text-red-200";
       document.getElementById("ledYellow").className = "w-10 h-10 rounded-full bg-yellow-950 border-2 border-yellow-900 led-light flex items-center justify-center font-bold text-[10px] text-yellow-200";
@@ -537,7 +524,7 @@
       }
     }
 
-    // ĐIỀU KHIỂN STEM 2: MÃ MORSE SOS
+    // MÃ MORSE
     function resetMorse() {
       const led = document.getElementById("morseLed");
       led.className = "w-14 h-14 rounded-full bg-red-950 border-4 border-red-900 flex items-center justify-center font-extrabold text-xs text-red-200";
@@ -565,19 +552,21 @@
       const code = document.getElementById("codeEditor").value;
       studentTasksState[curTask.id].code = code;
 
-      // XỬ LÝ DỰ ÁN STEM 1: ĐÈN GIAO THÔNG
-      if (curTask.type === "stem" || curTask.type === "stem_traffic") {
+      const type = getTaskType(curTask);
+
+      // 1. XỬ LÝ STEM ĐÈN GIAO THÔNG
+      if (type === "stem" || type === "stem_traffic") {
         runTrafficSimulation(code, curTask);
         return;
       }
 
-      // XỬ LÝ DỰ ÁN STEM 2: MÃ MORSE SOS
-      if (curTask.type === "stem_morse") {
+      // 2. XỬ LÝ STEM MÃ MORSE SOS
+      if (type === "stem_morse") {
         runMorseSimulation(code, curTask);
         return;
       }
 
-      // XỬ LÝ THUẬT TOÁN PYTHON TIÊU CHUẨN
+      // 3. XỬ LÝ THUẬT TOÁN PYTHON QUA SKULPT
       const consoleEl = document.getElementById("outputConsole");
       consoleEl.innerText = `Đang chấm [${curTask.title.split(":")[0]}]...\n`;
 
@@ -593,7 +582,14 @@
         }
       });
 
-      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true))
+      // Tiêm các hàm giả lập để tránh NameError nếu học sinh có gọi nhầm
+      const codeToRun = `
+def sleep(s): pass
+def morse_dot(): pass
+def morse_dash(): pass
+` + code;
+
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, codeToRun, true))
         .then(() => {
           const cleanOutput = outputBuffer.trim().replace(/\r/g, "");
           const expected = curTask.expectedOutput.trim();
@@ -618,10 +614,7 @@
           consoleEl.innerText += "\n[LỖI CÚ PHÁP]: " + errMsg;
           studentTasksState[curTask.id].failCount += 1;
 
-          let aiHint = "Kiểm tra dấu hai chấm (:) ở cuối câu lệnh for/if.";
-          if (errMsg.includes("IndexError")) aiHint = "Chỉ số danh sách đang vượt quá giới hạn mảng.";
-          else if (errMsg.includes("IndentationError")) aiHint = "Thụt đầu dòng chưa đồng đều.";
-
+          let aiHint = "Kiểm tra cú pháp câu lệnh hoặc thụt đầu dòng.";
           studentTasksState[curTask.id].lastError = { msg: errMsg, hint: aiHint };
           syncToFirebase(studentTasksState[curTask.id].failCount >= 3 ? "stuck" : "coding");
           appendBotMessage(`⚠️ <b>Lỗi biên dịch:</b> ${errMsg}<br><br>💡 <i>Gợi mở Socratic: ${aiHint}</i>`);
@@ -666,7 +659,7 @@
       }
     }
 
-    // Mô phỏng Morse SOS
+    // Mô phỏng Morse SOS (Chạy thực tế & Bắn chuỗi xung lên đèn SOS D10)
     async function runMorseSimulation(code, curTask) {
       const runBtnText = document.getElementById("runBtnText");
       runBtnText.innerText = "Đang phát tín hiệu SOS...";
@@ -676,13 +669,12 @@
 
       const hasDot = code.includes("morse_dot()");
       const hasDash = code.includes("morse_dash()");
-
       const dashCount = (code.match(/morse_dash\(\)/g) || []).length;
-      const hasDashLoop = code.includes("range(3)") && code.includes("morse_dash");
+      const hasDashLoop = (code.includes("range(3)") || code.includes("range(0, 3)")) && code.includes("morse_dash");
 
       if (!hasDot || (!hasDashLoop && dashCount < 3)) {
         studentTasksState[curTask.id].failCount += 1;
-        appendBotMessage("⚠️ <b>Tín hiệu chưa đủ:</b> Chữ O trong SOS cần 3 nhịp dài <code>morse_dash()</code>. Em hãy dùng vòng lặp <code>for i in range(3):</code> để phát đủ 3 nhịp nhé!");
+        appendBotMessage("⚠️ <b>Tín hiệu chưa đủ:</b> Chữ O trong SOS cần 3 nhịp dài <code>morse_dash()</code>. Em hãy dùng vòng lặp <code>for i in range(3):</code> để phát đủ 3 nhịp dài nhé!");
         runBtnText.innerText = "Chạy & Chấm bài";
         return;
       }
@@ -715,6 +707,7 @@
       const passedCount = Object.values(studentTasksState).filter(t => t.passed).length;
       const totalCount = assignments.length;
       const curTask = assignments[currentTaskIndex];
+      if (!curTask) return;
 
       dbRef.set({
         id: pcId,
@@ -749,6 +742,7 @@
 
       const lower = text.toLowerCase();
       const currentTask = assignments[currentTaskIndex];
+      const type = getTaskType(currentTask);
 
       const offTopicKeywords = ["game", "chơi", "phim", "bài hát", "ca sĩ", "yêu", "thời tiết", "chuyện cười", "kể chuyện", "đố vui", "ăn gì", "ai là ai", "facebook", "tiktok", "youtube"];
       if (offTopicKeywords.some(kw => lower.includes(kw))) {
@@ -761,7 +755,7 @@
       const askingSolutionKeywords = ["giải giùm", "giải hộ", "sửa giùm", "sửa hộ", "cho em code", "cho đáp án", "viết hộ", "làm hộ", "code mẫu hoàn chỉnh", "chép bài", "đáp án là gì"];
       if (askingSolutionKeywords.some(kw => lower.includes(kw))) {
         setTimeout(() => {
-          appendBotMessage(`🚫 <b>Thầy không thể đưa ra đáp án sẵn:</b> Mục tiêu của tiết học là rèn luyện tư duy thuật toán cho chính em! Hãy đọc kỹ gợi ý sau để tự làm:<br><br>💡 <i>Gợi ý: Em hãy kiểm tra xem thứ tự các câu lệnh và thời gian chờ sleep() đã khớp với chu kỳ đèn thực tế chưa?</i>`);
+          appendBotMessage(`🚫 <b>Thầy không thể đưa ra đáp án sẵn:</b> Mục tiêu của tiết học là rèn luyện tư duy thuật toán cho chính em! Hãy đọc kỹ gợi ý sau để tự làm:<br><br>💡 <i>Gợi ý: Hãy quan sát cách viết vòng lặp ở ký tự trước đó để áp dụng tương tự.</i>`);
         }, 300);
         return;
       }
@@ -771,13 +765,10 @@
         callGeminiSocratic(text, currentTask);
       } else {
         setTimeout(() => {
-          const taskState = studentTasksState[currentTask.id];
-          if (currentTask.type === "stem_morse") {
-            appendBotMessage(`Về dự án STEM Mã Morse: Ký tự 'O' ở giữa gồm 3 nhịp dài. ❓ <i>Em hãy quan sát cách viết vòng lặp ở chữ 'S' phía trên để áp dụng tương tự cho chữ 'O' nhé!</i>`);
-          } else if (currentTask.type === "stem" || currentTask.type === "stem_traffic") {
+          if (type === "stem_morse") {
+            appendBotMessage(`Về dự án STEM Mã Morse: Ký tự 'O' ở giữa gồm 3 nhịp dài <code>morse_dash()</code>. ❓ <i>Em hãy quan sát cách viết vòng lặp ở chữ 'S' phía trên để áp dụng tương tự cho chữ 'O' nhé!</i>`);
+          } else if (type === "stem_traffic") {
             appendBotMessage(`Về dự án STEM đèn giao thông: ❓ <i>Em hãy quan sát xem ngoài đời thực, đèn vàng thường sáng bao nhiêu giây trước khi chuyển sang đèn đỏ?</i>`);
-          } else if (taskState?.lastError) {
-            appendBotMessage(`Về lỗi trong bài <b>${currentTask.title.split(":")[0]}</b>:<br>Lỗi này xuất hiện do cú pháp dòng lệnh chưa chuẩn. ❓ <i>Em hãy đối chiếu lại cấu trúc lệnh mẫu xem có bị thiếu dấu hai chấm (:) hoặc thụt lề sai không?</i>`);
           } else {
             appendBotMessage(`Thầy đã ghi nhận câu hỏi về <b>${currentTask.title.split(":")[0]}</b>. Em hãy bấm nút <b>"Chạy & Chấm bài"</b> trước để xem máy tính phản hồi kết quả ra sao nhé!`);
           }
@@ -809,26 +800,21 @@ QUY TẮC: Tuyệt đối không đưa code giải hộ. Nếu hỏi ngoài lề
 
     function askQuickPrompt(type) {
       const curTask = assignments[currentTaskIndex];
-      const err = studentTasksState[curTask.id]?.lastError;
+      const taskType = getTaskType(curTask);
 
       if (type === 'explain') {
-        if (curTask.type === 'stem_morse') {
+        if (taskType === 'stem_morse') {
           appendUserMessage("Giải thích cơ chế mã Morse SOS?");
-          setTimeout(() => appendBotMessage("Trong mã Morse, một nhịp dài (—) có độ trễ gấp 3 lần một nhịp ngắn (·). Hàm <code>morse_dot()</code> chớp 0.2s, hàm <code>morse_dash()</code> chớp 0.6s."), 200);
+          setTimeout(() => appendBotMessage("Trong mã Morse, một nhịp dài (—) có độ trễ gấp 3 lần một nhịp ngắn (·). Hàm <code>morse_dot()</code> chớp 0.22s, hàm <code>morse_dash()</code> chớp 0.65s."), 200);
           return;
         }
-        if (curTask.type === 'stem' || curTask.type === 'stem_traffic') {
+        if (taskType === 'stem_traffic') {
           appendUserMessage("Giải thích cơ chế hoạt động của trạm STEM?");
           setTimeout(() => appendBotMessage("Mô hình STEM sử dụng các hàm điều khiển ảo: <code>led_red.on()</code> kích hoạt chân D13, <code>sleep(3)</code> giữ nguyên trạng thái trong 3 giây trước khi chuyển lệnh."), 200);
           return;
         }
-        if (!err) {
-          appendUserMessage("Giải thích lỗi vừa gặp?");
-          setTimeout(() => appendBotMessage("Code hiện tại chưa ghi nhận lỗi. Em hãy bấm <b>'Chạy & Chấm bài'</b> nhé!"), 200);
-          return;
-        }
         appendUserMessage("Giải thích lỗi vừa gặp?");
-        setTimeout(() => appendBotMessage(`Lỗi <code>${err.msg.split("\n")[0]}</code>: Máy tính không hiểu cú pháp này vì có thể em thiếu ký tự đóng khối (như <code>:</code>) hoặc thụt lề chưa đều.`), 200);
+        setTimeout(() => appendBotMessage("Em hãy bấm <b>'Chạy & Chấm bài'</b> để hệ thống kiểm tra logic thuật toán nhé!"), 200);
       } else {
         appendUserMessage("Gợi ý bước tiếp theo?");
         setTimeout(() => appendBotMessage(`💡 <b>Gợi ý bước tiếp:</b> Hãy quan sát logic điều kiện hoặc thứ tự tuần tự của các câu lệnh từ trên xuống dưới.`), 200);
