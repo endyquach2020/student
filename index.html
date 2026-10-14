@@ -1,30 +1,861 @@
-<!-- KHUNG MÔ PHỎNG MÃ MORSE SOS -->
-<div id="morseSimulatorBox" class="h-44 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0 hidden">
-  <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
-    <div class="flex items-center space-x-2">
-      <i data-lucide="radio" class="w-4 h-4 text-red-400 animate-pulse"></i>
-      <span class="text-xs font-bold uppercase tracking-wider text-red-300">Trạm Tín Hiệu Khẩn Cấp (Morse Beacon)</span>
-    </div>
-    <span class="text-[10px] bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-500/30">Chuẩn Quốc Tế SOS</span>
-  </div>
-  
-  <div class="flex-1 bg-slate-950 p-3 flex items-center justify-around">
-    <!-- Đèn cứu nạn khẩn cấp -->
-    <div class="flex flex-col items-center space-y-1.5">
-      <div id="morseLed" class="w-14 h-14 rounded-full bg-red-950 border-4 border-red-900 flex items-center justify-center font-extrabold text-xs text-red-200 transition-all duration-150">
-        SOS
+<!DOCTYPE html>
+<html lang="vi" class="h-full overflow-hidden">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeMentor-AI | Trạm Thực Hành Học Sinh (Python & STEM)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Skulpt Python In-Browser Engine -->
+  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Firebase Compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; overflow: hidden !important; }
+    textarea.code-editor {
+      tab-size: 4; -moz-tab-size: 4;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Hiệu ứng đèn LED giao thông */
+    .led-light { transition: all 0.25s ease; opacity: 0.2; }
+    .led-red-active {
+      opacity: 1 !important;
+      background-color: #ef4444 !important;
+      box-shadow: 0 0 25px 8px rgba(239, 68, 68, 0.8), inset 0 0 10px #fca5a5;
+    }
+    .led-yellow-active {
+      opacity: 1 !important;
+      background-color: #eab308 !important;
+      box-shadow: 0 0 25px 8px rgba(234, 179, 8, 0.8), inset 0 0 10px #fef08a;
+    }
+    .led-green-active {
+      opacity: 1 !important;
+      background-color: #22c55e !important;
+      box-shadow: 0 0 25px 8px rgba(34, 197, 94, 0.8), inset 0 0 10px #86efac;
+    }
+
+    /* Hiệu ứng đèn Morse phát xung */
+    .morse-active {
+      opacity: 1 !important;
+      background-color: #ef4444 !important;
+      border-color: #fca5a5 !important;
+      box-shadow: 0 0 35px 12px rgba(239, 68, 68, 0.95), inset 0 0 15px #ffffff;
+      color: #ffffff !important;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col font-sans overflow-hidden select-none">
+
+  <!-- Modal Đăng nhập Trạm máy -->
+  <div id="loginModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-md w-full shadow-2xl space-y-4">
+      <div class="text-center">
+        <div class="w-12 h-12 bg-blue-600 rounded-xl mx-auto flex items-center justify-center text-white mb-2 shadow-lg shadow-blue-500/30">
+          <i data-lucide="laptop" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-lg font-bold text-white">Điểm danh Trạm Thực Hành</h2>
+        <p class="text-xs text-slate-400 mt-1">Chọn số máy bạn đang ngồi và nhập họ tên để nhận nhiệm vụ</p>
       </div>
-      <span class="text-[10px] text-slate-400 font-mono">ĐÈN TÍN HIỆU CỨU HỘ</span>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Số máy (PC-01 đến PC-45):</label>
+          <select id="pcNumberSelect" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:ring-1 focus:ring-blue-500"></select>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Họ và tên học sinh:</label>
+          <input type="text" id="studentNameInput" placeholder="Ví dụ: Trần Minh Bảo" 
+                 class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-white focus:outline-none focus:ring-1 focus:ring-blue-500" />
+        </div>
+
+        <button onclick="confirmStudentLogin()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-lg transition shadow-lg shadow-blue-600/30">
+          Vào phòng học & Nhận bài
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header chính trên cùng -->
+  <header class="bg-slate-900 border-b border-slate-800 px-5 h-14 flex items-center justify-between flex-shrink-0 z-30">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-md shadow-blue-500/20">
+        <i data-lucide="cpu" class="w-4 h-4"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-sm font-bold text-white leading-tight">CodeMentor-AI | Lập Trình & Mô Phỏng STEM</h1>
+          <span id="currentStationBadge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">PC-??</span>
+        </div>
+        <p class="text-[11px] text-slate-400">Học sinh: <span id="currentStudentName" class="text-slate-200 font-medium">Chưa đăng nhập</span></p>
+      </div>
     </div>
 
-    <!-- Dải hiển thị chuỗi xung Morse trực quan -->
-    <div class="text-xs space-y-1.5 text-slate-300">
-      <div class="flex items-center space-x-2">
-        <span>Tín hiệu phát sóng:</span>
-        <span id="morseLiveSignal" class="font-mono font-bold text-amber-400 text-sm tracking-widest">[ Chờ phát... ]</span>
+    <div class="flex items-center space-x-3">
+      <div class="text-xs px-3 py-1 bg-slate-800 border border-slate-700 rounded-lg font-medium text-slate-300">
+        Tiến độ: <span id="studentProgressText" class="font-bold text-emerald-400">0/0 Đạt</span>
       </div>
-      <div class="text-[11px] text-slate-400">Chuẩn mã hóa: <b>S ( · · · )</b> | <b>O ( — — — )</b> | <b>S ( · · · )</b></div>
-      <div class="text-[10px] text-emerald-400 font-mono">Tự động kiểm tra độ trễ xung ngắn/dài thời gian thực</div>
+      <input type="password" id="studentApiKey" placeholder="Gemini API Key (tùy chọn)..."
+             class="text-xs px-3 py-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 w-44 focus:outline-none focus:ring-1 focus:ring-blue-500" />
+      <button onclick="runAndGradeCode()" id="runBtn" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center space-x-1.5 shadow-lg shadow-emerald-600/20 transition">
+        <i data-lucide="play" class="w-3.5 h-3.5"></i>
+        <span id="runBtnText">Chạy & Chấm bài</span>
+      </button>
     </div>
-  </div>
-</div>
+  </header>
+
+  <!-- Workspace Container: Khóa cứng chiều cao 100vh không trôi cuộn -->
+  <main class="flex-1 p-3 grid grid-cols-1 lg:grid-cols-12 gap-3 max-w-[1800px] w-full mx-auto min-h-0 overflow-hidden">
+    
+    <!-- CỘT 1: ĐỀ BÀI (3 cols) -->
+    <section class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-full overflow-hidden shadow-xl min-h-0">
+      <div class="px-4 py-2.5 border-b border-slate-800 flex items-center space-x-2 text-indigo-400 flex-shrink-0 bg-slate-900/90">
+        <i data-lucide="list-checks" class="w-4 h-4"></i>
+        <h2 class="font-bold uppercase tracking-wider text-slate-200 text-xs">Nhiệm vụ tiết học</h2>
+      </div>
+
+      <div class="p-2 border-b border-slate-800/80 flex-shrink-0">
+        <div class="flex flex-col space-y-1" id="taskTabList"></div>
+      </div>
+
+      <div class="flex-1 p-3 overflow-y-auto text-xs space-y-2.5 min-h-0 bg-slate-950/40">
+        <div class="flex items-center space-x-2">
+          <span id="taskTypeBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">LẬP TRÌNH</span>
+          <h3 class="font-bold text-white text-sm" id="taskTitle">Đang tải nhiệm vụ...</h3>
+        </div>
+        <p class="text-slate-400 leading-relaxed" id="taskDesc"></p>
+        
+        <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+          <span class="text-[10px] uppercase font-bold text-slate-500 block mb-1">Quy cách & Minh họa:</span>
+          <div class="text-slate-300 font-mono text-[11px]" id="taskSample"></div>
+        </div>
+
+        <div class="bg-blue-950/20 border border-blue-900/30 rounded-lg p-2 text-[11px] text-blue-300 leading-relaxed">
+          <p class="font-semibold text-blue-200 mb-0.5 flex items-center">
+            <i data-lucide="shield-alert" class="w-3 h-3 mr-1 text-amber-400"></i> Quy chuẩn Socratic:
+          </p>
+          Thầy AI hỗ trợ phân tích bản chất thuật toán và chu kỳ vật lý, không đưa mã nguồn giải hộ.
+        </div>
+      </div>
+
+      <div class="p-2 border-t border-slate-800 flex-shrink-0 bg-slate-900">
+        <button onclick="resetTaskCode()" class="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-semibold flex items-center justify-center space-x-1 transition">
+          <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+          <span>Khôi phục code mẫu bài này</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- CỘT 2: EDITOR & KHUNG STEM SIMULATOR / TERMINAL (5 cols) -->
+    <section class="lg:col-span-5 flex flex-col space-y-3 h-full min-h-0 overflow-hidden">
+      <!-- Editor Box -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl flex-1 flex flex-col overflow-hidden shadow-xl min-h-0">
+        <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-2 flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="file-code-2" class="w-4 h-4 text-emerald-400"></i>
+            <span class="text-xs font-mono font-bold text-slate-300" id="currentFileName">task_1.py</span>
+          </div>
+          <span class="text-[11px] text-slate-500 font-mono" id="engineTypeBadge">Python 3.x In-Browser</span>
+        </div>
+        <div class="flex-1 p-2 bg-slate-950 flex flex-col min-h-0 overflow-hidden">
+          <textarea id="codeEditor" oninput="notifyTyping()" spellcheck="false" 
+                    class="code-editor w-full flex-1 p-2 bg-transparent text-emerald-400 text-xs leading-relaxed focus:outline-none resize-none overflow-y-auto"></textarea>
+        </div>
+      </div>
+
+      <!-- KHUNG STEM 1: MÔ HÌNH ĐÈN GIAO THÔNG -->
+      <div id="stemTrafficBox" class="h-44 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0 hidden">
+        <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="cpu" class="w-4 h-4 text-amber-400"></i>
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-300">Mô hình STEM: Đèn Giao Thông Ngã Tư</span>
+          </div>
+          <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">Mô phỏng IoT</span>
+        </div>
+        
+        <div class="flex-1 bg-slate-950 p-3 flex items-center justify-around">
+          <div class="bg-slate-900 p-2.5 rounded-2xl border-2 border-slate-700 flex space-x-3 items-center shadow-inner">
+            <div class="flex flex-col items-center space-y-1">
+              <div id="ledRed" class="w-10 h-10 rounded-full bg-red-950 border-2 border-red-900 led-light flex items-center justify-center font-bold text-[10px] text-red-200">ĐỎ</div>
+              <span class="text-[9px] text-slate-400 font-mono">D13</span>
+            </div>
+            <div class="flex flex-col items-center space-y-1">
+              <div id="ledYellow" class="w-10 h-10 rounded-full bg-yellow-950 border-2 border-yellow-900 led-light flex items-center justify-center font-bold text-[10px] text-yellow-200">VÀNG</div>
+              <span class="text-[9px] text-slate-400 font-mono">D12</span>
+            </div>
+            <div class="flex flex-col items-center space-y-1">
+              <div id="ledGreen" class="w-10 h-10 rounded-full bg-green-950 border-2 border-green-900 led-light flex items-center justify-center font-bold text-[10px] text-green-200">XANH</div>
+              <span class="text-[9px] text-slate-400 font-mono">D11</span>
+            </div>
+          </div>
+
+          <div class="text-xs space-y-1.5 text-slate-400">
+            <div class="flex items-center space-x-2">
+              <span>Trạng thái LED:</span>
+              <span id="stemCurrentStateText" class="font-bold text-white">Đã tắt đèn</span>
+            </div>
+            <div class="text-[11px] text-slate-500">Chu kỳ chuẩn: <b class="text-red-400">Đỏ</b> ➔ <b class="text-yellow-400">Vàng</b> ➔ <b class="text-green-400">Xanh</b></div>
+            <div class="text-[10px] text-indigo-400 font-mono">Hàm: led_red.on(), sleep(2)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KHUNG STEM 2: MÔ HÌNH MÃ MORSE SOS -->
+      <div id="stemMorseBox" class="h-44 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0 hidden">
+        <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="radio" class="w-4 h-4 text-red-400 animate-pulse"></i>
+            <span class="text-xs font-bold uppercase tracking-wider text-red-300">Trạm Tín Hiệu Cứu Hộ Khẩn Cấp (Morse Beacon)</span>
+          </div>
+          <span class="text-[10px] bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-500/30">Chuẩn Hàng Hải SOS</span>
+        </div>
+        
+        <div class="flex-1 bg-slate-950 p-3 flex items-center justify-around">
+          <div class="flex flex-col items-center space-y-1.5">
+            <div id="morseLed" class="w-14 h-14 rounded-full bg-red-950 border-4 border-red-900 flex items-center justify-center font-extrabold text-xs text-red-200 transition-all duration-150">
+              SOS
+            </div>
+            <span class="text-[10px] text-slate-400 font-mono">ĐÈN CỨU NẠN D10</span>
+          </div>
+
+          <div class="text-xs space-y-1.5 text-slate-300">
+            <div class="flex items-center space-x-2">
+              <span>Chuỗi xung phát:</span>
+              <span id="morseLiveSignal" class="font-mono font-bold text-amber-400 text-sm tracking-widest">[ Chờ phát... ]</span>
+            </div>
+            <div class="text-[11px] text-slate-400">Quy chuẩn quốc tế: <b>S ( · · · )</b> | <b>O ( — — — )</b> | <b>S ( · · · )</b></div>
+            <div class="text-[10px] text-indigo-400 font-mono">Hàm: morse_dot(), morse_dash()</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terminal Output Cố định chiều cao (Khi làm bài thuật toán thông thường) -->
+      <div id="terminalBox" class="h-40 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0">
+        <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Terminal & Kết quả Testcase</span>
+        </div>
+        <pre id="outputConsole" class="p-2.5 flex-1 bg-slate-950 text-slate-300 font-mono text-xs overflow-y-auto whitespace-pre-wrap leading-relaxed">Bấm "Chạy & Chấm bài" để kiểm tra kết quả...</pre>
+      </div>
+    </section>
+
+    <!-- CỘT 3: TRỢ LÝ SOCRATIC AI (4 cols) - CỐ ĐỊNH HOÀN TOÀN KHÔNG BỊ TRÔI -->
+    <section class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-full overflow-hidden shadow-xl min-h-0">
+      <div class="bg-indigo-950/40 border-b border-slate-800 p-3 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center space-x-2">
+          <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold text-white">Gia Sư Gợi Mở (Socratic AI)</h3>
+            <p class="text-[10px] text-emerald-400">Đồng hành tư duy cùng học sinh</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vùng tin nhắn tự cuộn nội bộ -->
+      <div id="chatHistory" class="flex-1 p-3 overflow-y-auto space-y-2.5 bg-slate-950/50 text-xs min-h-0">
+        <div class="flex items-start space-x-2">
+          <div class="w-6 h-6 rounded-full bg-indigo-600/80 flex items-center justify-center text-white text-[10px] flex-shrink-0 mt-0.5">AI</div>
+          <div class="bg-slate-800/90 border border-slate-700/80 p-2.5 rounded-xl rounded-tl-none text-slate-300 leading-relaxed">
+            Chào em! Thầy AI đã sẵn sàng. Em hãy chọn bài tập bên trái để giải thuật toán hoặc thực hành các mô hình STEM. Thầy sẽ luôn đồng hành gợi mở giúp em!
+          </div>
+        </div>
+      </div>
+
+      <!-- Nút gợi ý nhanh & Ô gõ tin nhắn -->
+      <div class="p-2.5 border-t border-slate-800 bg-slate-900 space-y-2 flex-shrink-0">
+        <div class="flex space-x-1.5 overflow-x-auto pb-1 text-[11px]">
+          <button onclick="askQuickPrompt('explain')" class="whitespace-nowrap px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700">
+            💡 Giải thích lỗi?
+          </button>
+          <button onclick="askQuickPrompt('hint')" class="whitespace-nowrap px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700">
+            ❓ Gợi ý bước tiếp?
+          </button>
+        </div>
+        <div class="flex items-center space-x-2">
+          <input type="text" id="studentChatInput" placeholder="Hỏi Trợ lý AI về bài này..."
+                 class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                 onkeydown="if(event.key === 'Enter') sendStudentChat()" />
+          <button onclick="sendStudentChat()" class="p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition shadow-md shadow-indigo-600/20">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCndekhMOZCL9MUFGBE6F7z3P6rNI805ew",
+      authDomain: "codementor-ai-f614a.firebaseapp.com",
+      databaseURL: "https://codementor-ai-f614a-default-rtdb.firebaseio.com",
+      projectId: "codementor-ai-f614a",
+      storageBucket: "codementor-ai-f614a.firebasestorage.app",
+      messagingSenderId: "837216684594",
+      appId: "1:837216684594:web:f1527326db821bb8974a2b",
+      measurementId: "G-TV7C8LP8EX"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    // BỘ BÀI TẬP MẶC ĐỊNH PHÒNG KHI FIREBASE CHƯA CÓ
+    const defaultAssignments = [
+      {
+        id: "task_1",
+        type: "algorithm",
+        title: "Bài 1: Tính tổng số chẵn từ 1 đến N",
+        desc: "Viết chương trình tính tổng tất cả các số nguyên chẵn trong phạm vi từ 1 đến N (với N = 10). In ra giá trị tổng.",
+        sample: "N = 10 ➔ Kết quả: 30",
+        expectedOutput: "30",
+        template: "# Bài 1: Tính tổng số chẵn từ 1 đến N\nn = 10\ntong = 0\nfor i in range(1, n + 1):\n    if i % 2 == 0:\n        tong += i\nprint(tong)"
+      },
+      {
+        id: "task_2",
+        type: "algorithm",
+        title: "Bài 2: Đếm số lượng ước của N",
+        desc: "Viết chương trình đếm xem số nguyên N = 12 có bao nhiêu ước số nguyên dương. In ra số lượng ước.",
+        sample: "N = 12 (ước: 1, 2, 3, 4, 6, 12) ➔ Kết quả: 6",
+        expectedOutput: "6",
+        template: "# Bài 2: Đếm số ước của N\nn = 12\ndem = 0\n# Viết tiếp vòng lặp tại đây...\nprint(dem)"
+      },
+      {
+        id: "task_3",
+        type: "stem_traffic",
+        title: "Bài 3: [STEM] Điều khiển Trạm Đèn Giao Thông",
+        desc: "Dự án STEM: Vận dụng logic tuần tự và trễ thời gian để mô phỏng chu kỳ đèn giao thông ngã tư: Bật ĐỎ (3s) ➔ Bật VÀNG (1s) ➔ Bật XANH (3s).",
+        sample: "Đỏ sáng ➔ Vàng sáng ➔ Xanh sáng (Lặp lại)",
+        expectedOutput: "STEM_PASSED",
+        template: "# DỰ ÁN STEM: ĐIỀU KHIỂN ĐÈN GIAO THÔNG\n# Các hàm có sẵn: led_red.on(), led_yellow.on(), led_green.on()\n# led_all_off(), sleep(giây)\n\nled_all_off()\n\n# 1. Bật đèn Đỏ sáng 3 giây\nled_red.on()\nsleep(3)\n\n# 2. Chuyển sang đèn Vàng 1 giây (Học sinh viết tiếp tại đây):\n\n\n# 3. Chuyển sang đèn Xanh 3 giây (Học sinh viết tiếp tại đây):\n\n\nprint('STEM_PASSED')"
+      }
+    ];
+
+    let assignments = [...defaultAssignments];
+    let currentTaskIndex = 0;
+    let pcId = null;
+    let studentName = "";
+    let studentTasksState = {};
+    let dbRef = null;
+
+    window.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      const select = document.getElementById("pcNumberSelect");
+      for (let i = 1; i <= 45; i++) {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.innerText = `PC-${String(i).padStart(2, '0')}`;
+        select.appendChild(opt);
+      }
+      setupTabIndentation();
+      listenAssignments();
+    });
+
+    function setupTabIndentation() {
+      const editor = document.getElementById("codeEditor");
+      editor.addEventListener("keydown", function(e) {
+        if (e.key === "Tab") {
+          e.preventDefault();
+          const start = this.selectionStart;
+          const end = this.selectionEnd;
+          this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+          this.selectionStart = this.selectionEnd = start + 4;
+        }
+      });
+    }
+
+    function listenAssignments() {
+      firebase.database().ref("assignments").on("value", snapshot => {
+        const data = snapshot.val();
+        if (data && Array.isArray(data) && data.length > 0) {
+          assignments = data;
+        }
+        initTasksState();
+        renderTaskList();
+        loadTask(currentTaskIndex);
+      });
+    }
+
+    function initTasksState() {
+      assignments.forEach(task => {
+        if (!studentTasksState[task.id]) {
+          studentTasksState[task.id] = {
+            passed: false,
+            code: task.template,
+            failCount: 0,
+            lastError: null
+          };
+        }
+      });
+    }
+
+    function renderTaskList() {
+      const container = document.getElementById("taskTabList");
+      container.innerHTML = "";
+
+      assignments.forEach((task, idx) => {
+        const isSelected = idx === currentTaskIndex;
+        const isPassed = studentTasksState[task.id]?.passed;
+        const isStem = task.type === "stem" || task.type === "stem_traffic" || task.type === "stem_morse";
+
+        const btn = document.createElement("button");
+        btn.onclick = () => switchTask(idx);
+        btn.className = `p-1.5 rounded-lg text-left flex items-center justify-between text-xs transition border ${
+          isSelected 
+            ? (isStem ? "bg-amber-600/30 border-amber-500 text-white font-bold" : "bg-indigo-600/30 border-indigo-500 text-white font-bold")
+            : "bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700"
+        }`;
+
+        btn.innerHTML = `
+          <div class="flex items-center space-x-2 truncate">
+            <span class="w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-mono ${
+              isPassed ? 'bg-emerald-500 text-white' : (isStem ? 'bg-amber-500 text-slate-950 font-bold' : 'bg-slate-800 text-slate-400')
+            }">${idx + 1}</span>
+            <span class="truncate ${isStem ? 'text-amber-300 font-semibold' : ''}">${task.title.split(":")[0]}</span>
+          </div>
+          ${isPassed 
+            ? '<i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0"></i>' 
+            : '<span class="text-[9px] text-amber-400 flex-shrink-0">Chưa đạt</span>'}
+        `;
+        container.appendChild(btn);
+      });
+      lucide.createIcons();
+      updateProgressText();
+    }
+
+    function switchTask(idx) {
+      const currentTask = assignments[currentTaskIndex];
+      studentTasksState[currentTask.id].code = document.getElementById("codeEditor").value;
+
+      currentTaskIndex = idx;
+      renderTaskList();
+      loadTask(idx);
+    }
+
+    function loadTask(idx) {
+      const task = assignments[idx];
+      document.getElementById("taskTitle").innerText = task.title;
+      document.getElementById("taskDesc").innerText = task.desc;
+      document.getElementById("taskSample").innerText = task.sample;
+      document.getElementById("currentFileName").innerText = `${task.id}.py`;
+      document.getElementById("codeEditor").value = studentTasksState[task.id]?.code || task.template;
+
+      const trafficBox = document.getElementById("stemTrafficBox");
+      const morseBox = document.getElementById("stemMorseBox");
+      const terminalBox = document.getElementById("terminalBox");
+      const typeBadge = document.getElementById("taskTypeBadge");
+      const engineBadge = document.getElementById("engineTypeBadge");
+
+      trafficBox.classList.add("hidden");
+      morseBox.classList.add("hidden");
+      terminalBox.classList.add("hidden");
+
+      if (task.type === "stem" || task.type === "stem_traffic") {
+        trafficBox.classList.remove("hidden");
+        typeBadge.innerText = "DỰ ÁN STEM";
+        typeBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30";
+        engineBadge.innerText = "Virtual Traffic Simulator";
+        resetLeds();
+      } else if (task.type === "stem_morse") {
+        morseBox.classList.remove("hidden");
+        typeBadge.innerText = "DỰ ÁN STEM";
+        typeBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-300 border border-red-500/30";
+        engineBadge.innerText = "Virtual Morse Beacon";
+        resetMorse();
+      } else {
+        terminalBox.classList.remove("hidden");
+        typeBadge.innerText = "LẬP TRÌNH";
+        typeBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30";
+        engineBadge.innerText = "Python 3.x In-Browser";
+      }
+    }
+
+    function resetTaskCode() {
+      const task = assignments[currentTaskIndex];
+      studentTasksState[task.id].code = task.template;
+      document.getElementById("codeEditor").value = task.template;
+      appendBotMessage(`Thầy đã khôi phục lại mã mẫu cho <b>${task.title.split(":")[0]}</b>.`);
+      if (task.type === "stem" || task.type === "stem_traffic") resetLeds();
+      if (task.type === "stem_morse") resetMorse();
+    }
+
+    function confirmStudentLogin() {
+      pcId = parseInt(document.getElementById("pcNumberSelect").value);
+      studentName = document.getElementById("studentNameInput").value.trim() || `Học sinh máy ${pcId}`;
+
+      document.getElementById("currentStationBadge").innerText = `PC-${String(pcId).padStart(2, '0')}`;
+      document.getElementById("currentStudentName").innerText = studentName;
+      document.getElementById("loginModal").classList.add("hidden");
+
+      dbRef = firebase.database().ref(`pcs/pc_${pcId}`);
+      syncToFirebase("coding");
+
+      dbRef.onDisconnect().update({ status: "offline" });
+      appendBotMessage(`Chào <b>${studentName}</b>! Em đã kết nối tại <b>PC-${String(pcId).padStart(2, '0')}</b>. Hãy hoàn thành các nhiệm vụ được giao nhé!`);
+    }
+
+    let typingTimer;
+    function notifyTyping() {
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => {
+        const curId = assignments[currentTaskIndex].id;
+        studentTasksState[curId].code = document.getElementById("codeEditor").value;
+        syncToFirebase("coding");
+      }, 1000);
+    }
+
+    // ĐIỀU KHIỂN STEM 1: ĐÈN GIAO THÔNG
+    function resetLeds() {
+      document.getElementById("ledRed").className = "w-10 h-10 rounded-full bg-red-950 border-2 border-red-900 led-light flex items-center justify-center font-bold text-[10px] text-red-200";
+      document.getElementById("ledYellow").className = "w-10 h-10 rounded-full bg-yellow-950 border-2 border-yellow-900 led-light flex items-center justify-center font-bold text-[10px] text-yellow-200";
+      document.getElementById("ledGreen").className = "w-10 h-10 rounded-full bg-green-950 border-2 border-green-900 led-light flex items-center justify-center font-bold text-[10px] text-green-200";
+      document.getElementById("stemCurrentStateText").innerText = "Đã tắt tất cả đèn";
+      document.getElementById("stemCurrentStateText").className = "font-bold text-slate-400";
+    }
+
+    function activateLed(color) {
+      resetLeds();
+      const textEl = document.getElementById("stemCurrentStateText");
+      if (color === 'red') {
+        document.getElementById("ledRed").className = "w-10 h-10 rounded-full led-red-active border-2 border-red-400 flex items-center justify-center font-bold text-[10px] text-white";
+        textEl.innerText = "ĐÈN ĐỎ ĐANG SÁNG (DỪNG LẠI)";
+        textEl.className = "font-bold text-red-400";
+      } else if (color === 'yellow') {
+        document.getElementById("ledYellow").className = "w-10 h-10 rounded-full led-yellow-active border-2 border-yellow-300 flex items-center justify-center font-bold text-[10px] text-slate-950";
+        textEl.innerText = "ĐÈN VÀNG ĐANG SÁNG (GIẢM TỐC)";
+        textEl.className = "font-bold text-yellow-400";
+      } else if (color === 'green') {
+        document.getElementById("ledGreen").className = "w-10 h-10 rounded-full led-green-active border-2 border-green-300 flex items-center justify-center font-bold text-[10px] text-white";
+        textEl.innerText = "ĐÈN XANH ĐANG SÁNG (ĐƯỢC ĐI)";
+        textEl.className = "font-bold text-emerald-400";
+      }
+    }
+
+    // ĐIỀU KHIỂN STEM 2: MÃ MORSE SOS
+    function resetMorse() {
+      const led = document.getElementById("morseLed");
+      led.className = "w-14 h-14 rounded-full bg-red-950 border-4 border-red-900 flex items-center justify-center font-extrabold text-xs text-red-200";
+      document.getElementById("morseLiveSignal").innerText = "[ Chờ phát... ]";
+    }
+
+    async function flashMorse(type) {
+      const led = document.getElementById("morseLed");
+      const signalText = document.getElementById("morseLiveSignal");
+      const duration = (type === 'dot') ? 220 : 650;
+      const char = (type === 'dot') ? '·' : '—';
+
+      led.className = "w-14 h-14 rounded-full morse-active border-4 flex items-center justify-center font-extrabold text-xs";
+      signalText.innerText += " " + char;
+
+      await new Promise(r => setTimeout(r, duration));
+
+      led.className = "w-14 h-14 rounded-full bg-red-950 border-4 border-red-900 flex items-center justify-center font-extrabold text-xs text-red-200";
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    // CHẠY & CHẤM ĐIỂM BÀI NỘP
+    async function runAndGradeCode() {
+      const curTask = assignments[currentTaskIndex];
+      const code = document.getElementById("codeEditor").value;
+      studentTasksState[curTask.id].code = code;
+
+      // XỬ LÝ DỰ ÁN STEM 1: ĐÈN GIAO THÔNG
+      if (curTask.type === "stem" || curTask.type === "stem_traffic") {
+        runTrafficSimulation(code, curTask);
+        return;
+      }
+
+      // XỬ LÝ DỰ ÁN STEM 2: MÃ MORSE SOS
+      if (curTask.type === "stem_morse") {
+        runMorseSimulation(code, curTask);
+        return;
+      }
+
+      // XỬ LÝ THUẬT TOÁN PYTHON TIÊU CHUẨN
+      const consoleEl = document.getElementById("outputConsole");
+      consoleEl.innerText = `Đang chấm [${curTask.title.split(":")[0]}]...\n`;
+
+      let outputBuffer = "";
+      Sk.configure({
+        output: text => {
+          consoleEl.innerText += text;
+          outputBuffer += text;
+        },
+        read: x => {
+          if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined) throw "File not found: '" + x + "'";
+          return Sk.builtinFiles["files"][x];
+        }
+      });
+
+      Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, code, true))
+        .then(() => {
+          const cleanOutput = outputBuffer.trim().replace(/\r/g, "");
+          const expected = curTask.expectedOutput.trim();
+
+          if (cleanOutput === expected || cleanOutput.endsWith(expected)) {
+            consoleEl.innerText += `\n\n[CHÍNH XÁC] Kết quả khớp hoàn toàn (${cleanOutput} == ${expected})!`;
+            studentTasksState[curTask.id].passed = true;
+            studentTasksState[curTask.id].failCount = 0;
+            studentTasksState[curTask.id].lastError = null;
+            renderTaskList();
+            syncToFirebase("coding");
+            appendBotMessage(`🎉 Chúc mừng em đã hoàn thành xuất sắc <b>${curTask.title.split(":")[0]}</b>! Hãy chuyển sang nhiệm vụ tiếp theo.`);
+          } else {
+            consoleEl.innerText += `\n\n[CHƯA ĐÚNG] Kết quả in ra: "${cleanOutput}" | Kỳ vọng: "${expected}"`;
+            studentTasksState[curTask.id].failCount += 1;
+            syncToFirebase("coding");
+            appendBotMessage(`Kết quả tính toán chưa đúng với yêu cầu bài toán. Em hãy đọc lại ví dụ và kiểm tra lại thuật toán nhé!`);
+          }
+        })
+        .catch(err => {
+          const errMsg = err.toString();
+          consoleEl.innerText += "\n[LỖI CÚ PHÁP]: " + errMsg;
+          studentTasksState[curTask.id].failCount += 1;
+
+          let aiHint = "Kiểm tra dấu hai chấm (:) ở cuối câu lệnh for/if.";
+          if (errMsg.includes("IndexError")) aiHint = "Chỉ số danh sách đang vượt quá giới hạn mảng.";
+          else if (errMsg.includes("IndentationError")) aiHint = "Thụt đầu dòng chưa đồng đều.";
+
+          studentTasksState[curTask.id].lastError = { msg: errMsg, hint: aiHint };
+          syncToFirebase(studentTasksState[curTask.id].failCount >= 3 ? "stuck" : "coding");
+          appendBotMessage(`⚠️ <b>Lỗi biên dịch:</b> ${errMsg}<br><br>💡 <i>Gợi mở Socratic: ${aiHint}</i>`);
+        });
+    }
+
+    // Mô phỏng đèn giao thông
+    async function runTrafficSimulation(code, curTask) {
+      const runBtnText = document.getElementById("runBtnText");
+      runBtnText.innerText = "Đang chạy mô phỏng STEM...";
+
+      const hasRed = code.includes("led_red.on()");
+      const hasYellow = code.includes("led_yellow.on()");
+      const hasGreen = code.includes("led_green.on()");
+
+      if (!hasRed || !hasYellow || !hasGreen) {
+        studentTasksState[curTask.id].failCount += 1;
+        appendBotMessage("⚠️ <b>Mô phỏng STEM chưa đạt:</b> Chu kỳ đèn giao thông cần điều khiển đủ cả 3 đèn. Em hãy kiểm tra xem đã gọi đủ các lệnh <code>led_red.on()</code>, <code>led_yellow.on()</code>, <code>led_green.on()</code> chưa nhé!");
+        runBtnText.innerText = "Chạy & Chấm bài";
+        return;
+      }
+
+      try {
+        activateLed('red');
+        await new Promise(r => setTimeout(r, 1500));
+        activateLed('yellow');
+        await new Promise(r => setTimeout(r, 1000));
+        activateLed('green');
+        await new Promise(r => setTimeout(r, 1500));
+        resetLeds();
+
+        studentTasksState[curTask.id].passed = true;
+        studentTasksState[curTask.id].failCount = 0;
+        studentTasksState[curTask.id].lastError = null;
+        renderTaskList();
+        syncToFirebase("coding");
+        appendBotMessage(`🎉 <b>XUẤT SẮC!</b> Mô hình đèn giao thông STEM đã hoạt động chuẩn xác theo đúng chu kỳ tín hiệu giao thông thực tế!`);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        runBtnText.innerText = "Chạy & Chấm bài";
+      }
+    }
+
+    // Mô phỏng Morse SOS
+    async function runMorseSimulation(code, curTask) {
+      const runBtnText = document.getElementById("runBtnText");
+      runBtnText.innerText = "Đang phát tín hiệu SOS...";
+
+      const signalText = document.getElementById("morseLiveSignal");
+      signalText.innerText = "";
+
+      const hasDot = code.includes("morse_dot()");
+      const hasDash = code.includes("morse_dash()");
+
+      const dashCount = (code.match(/morse_dash\(\)/g) || []).length;
+      const hasDashLoop = code.includes("range(3)") && code.includes("morse_dash");
+
+      if (!hasDot || (!hasDashLoop && dashCount < 3)) {
+        studentTasksState[curTask.id].failCount += 1;
+        appendBotMessage("⚠️ <b>Tín hiệu chưa đủ:</b> Chữ O trong SOS cần 3 nhịp dài <code>morse_dash()</code>. Em hãy dùng vòng lặp <code>for i in range(3):</code> để phát đủ 3 nhịp nhé!");
+        runBtnText.innerText = "Chạy & Chấm bài";
+        return;
+      }
+
+      try {
+        // Chữ S (3 dot)
+        for (let i = 0; i < 3; i++) await flashMorse('dot');
+        await new Promise(r => setTimeout(r, 350));
+        // Chữ O (3 dash)
+        for (let i = 0; i < 3; i++) await flashMorse('dash');
+        await new Promise(r => setTimeout(r, 350));
+        // Chữ S (3 dot)
+        for (let i = 0; i < 3; i++) await flashMorse('dot');
+
+        studentTasksState[curTask.id].passed = true;
+        studentTasksState[curTask.id].failCount = 0;
+        studentTasksState[curTask.id].lastError = null;
+        renderTaskList();
+        syncToFirebase("coding");
+        appendBotMessage("🎉 <b>TUYỆT VỜI!</b> Em đã lập trình phát thành công mã cứu nạn quốc tế SOS qua trạm đèn Morse!");
+      } catch (e) {
+        console.error(e);
+      } finally {
+        runBtnText.innerText = "Chạy & Chấm bài";
+      }
+    }
+
+    function syncToFirebase(currentStatus) {
+      if (!dbRef) return;
+      const passedCount = Object.values(studentTasksState).filter(t => t.passed).length;
+      const totalCount = assignments.length;
+      const curTask = assignments[currentTaskIndex];
+
+      dbRef.set({
+        id: pcId,
+        name: studentName,
+        status: (passedCount === totalCount && totalCount > 0) ? "success" : currentStatus,
+        passedCount: passedCount,
+        totalCount: totalCount,
+        currentTaskId: curTask.id,
+        currentTaskTitle: curTask.title,
+        code: document.getElementById("codeEditor").value,
+        tasks: studentTasksState,
+        failCount: studentTasksState[curTask.id]?.failCount || 0,
+        error: studentTasksState[curTask.id]?.lastError || null,
+        aiHint: studentTasksState[curTask.id]?.lastError?.hint || null,
+        lastActive: Date.now()
+      });
+    }
+
+    function updateProgressText() {
+      const passed = Object.values(studentTasksState).filter(t => t.passed).length;
+      document.getElementById("studentProgressText").innerText = `${passed}/${assignments.length} Đạt`;
+    }
+
+    // BỘ LỌC SOCRATIC
+    function sendStudentChat() {
+      const input = document.getElementById("studentChatInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendUserMessage(text);
+      input.value = "";
+
+      const lower = text.toLowerCase();
+      const currentTask = assignments[currentTaskIndex];
+
+      const offTopicKeywords = ["game", "chơi", "phim", "bài hát", "ca sĩ", "yêu", "thời tiết", "chuyện cười", "kể chuyện", "đố vui", "ăn gì", "ai là ai", "facebook", "tiktok", "youtube"];
+      if (offTopicKeywords.some(kw => lower.includes(kw))) {
+        setTimeout(() => {
+          appendBotMessage(`⚠️ <b>Nhắc nhở học tập:</b> Thầy AI chỉ hỗ trợ các thắc mắc liên quan trực tiếp đến bài thực hành lập trình/STEM hôm nay. Em hãy tập trung hoàn thành <b>${currentTask.title.split(":")[0]}</b> nhé!`);
+        }, 300);
+        return;
+      }
+
+      const askingSolutionKeywords = ["giải giùm", "giải hộ", "sửa giùm", "sửa hộ", "cho em code", "cho đáp án", "viết hộ", "làm hộ", "code mẫu hoàn chỉnh", "chép bài", "đáp án là gì"];
+      if (askingSolutionKeywords.some(kw => lower.includes(kw))) {
+        setTimeout(() => {
+          appendBotMessage(`🚫 <b>Thầy không thể đưa ra đáp án sẵn:</b> Mục tiêu của tiết học là rèn luyện tư duy thuật toán cho chính em! Hãy đọc kỹ gợi ý sau để tự làm:<br><br>💡 <i>Gợi ý: Em hãy kiểm tra xem thứ tự các câu lệnh và thời gian chờ sleep() đã khớp với chu kỳ đèn thực tế chưa?</i>`);
+        }, 300);
+        return;
+      }
+
+      const apiKey = document.getElementById("studentApiKey").value.trim();
+      if (apiKey) {
+        callGeminiSocratic(text, currentTask);
+      } else {
+        setTimeout(() => {
+          const taskState = studentTasksState[currentTask.id];
+          if (currentTask.type === "stem_morse") {
+            appendBotMessage(`Về dự án STEM Mã Morse: Ký tự 'O' ở giữa gồm 3 nhịp dài. ❓ <i>Em hãy quan sát cách viết vòng lặp ở chữ 'S' phía trên để áp dụng tương tự cho chữ 'O' nhé!</i>`);
+          } else if (currentTask.type === "stem" || currentTask.type === "stem_traffic") {
+            appendBotMessage(`Về dự án STEM đèn giao thông: ❓ <i>Em hãy quan sát xem ngoài đời thực, đèn vàng thường sáng bao nhiêu giây trước khi chuyển sang đèn đỏ?</i>`);
+          } else if (taskState?.lastError) {
+            appendBotMessage(`Về lỗi trong bài <b>${currentTask.title.split(":")[0]}</b>:<br>Lỗi này xuất hiện do cú pháp dòng lệnh chưa chuẩn. ❓ <i>Em hãy đối chiếu lại cấu trúc lệnh mẫu xem có bị thiếu dấu hai chấm (:) hoặc thụt lề sai không?</i>`);
+          } else {
+            appendBotMessage(`Thầy đã ghi nhận câu hỏi về <b>${currentTask.title.split(":")[0]}</b>. Em hãy bấm nút <b>"Chạy & Chấm bài"</b> trước để xem máy tính phản hồi kết quả ra sao nhé!`);
+          }
+        }, 400);
+      }
+    }
+
+    async function callGeminiSocratic(studentQuestion, currentTask) {
+      const apiKey = document.getElementById("studentApiKey").value.trim();
+      const code = document.getElementById("codeEditor").value;
+
+      const systemInstruction = `Bạn là Giáo viên Tin học THPT kiên nhẫn, chuẩn mực Socratic.
+BỐI CẢNH: Bài "${currentTask.title}", code: \`\`\`${code}\`\`\`. Câu hỏi học sinh: "${studentQuestion}".
+QUY TẮC: Tuyệt đối không đưa code giải hộ. Nếu hỏi ngoài lề hãy từ chối lịch sự. Chỉ giải thích bản chất và đặt 1 câu hỏi gợi mở để học sinh tự làm. Ngắn gọn dưới 3 câu.`;
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: systemInstruction }] }] })
+        });
+        const data = await response.json();
+        const reply = data.candidates[0].content.parts[0].text;
+        appendBotMessage(reply.replace(/\n/g, "<br>"));
+      } catch (err) {
+        appendBotMessage("Em hãy kiểm tra lại dòng lệnh vừa sửa và chạy thử lại nhé!");
+      }
+    }
+
+    function askQuickPrompt(type) {
+      const curTask = assignments[currentTaskIndex];
+      const err = studentTasksState[curTask.id]?.lastError;
+
+      if (type === 'explain') {
+        if (curTask.type === 'stem_morse') {
+          appendUserMessage("Giải thích cơ chế mã Morse SOS?");
+          setTimeout(() => appendBotMessage("Trong mã Morse, một nhịp dài (—) có độ trễ gấp 3 lần một nhịp ngắn (·). Hàm <code>morse_dot()</code> chớp 0.2s, hàm <code>morse_dash()</code> chớp 0.6s."), 200);
+          return;
+        }
+        if (curTask.type === 'stem' || curTask.type === 'stem_traffic') {
+          appendUserMessage("Giải thích cơ chế hoạt động của trạm STEM?");
+          setTimeout(() => appendBotMessage("Mô hình STEM sử dụng các hàm điều khiển ảo: <code>led_red.on()</code> kích hoạt chân D13, <code>sleep(3)</code> giữ nguyên trạng thái trong 3 giây trước khi chuyển lệnh."), 200);
+          return;
+        }
+        if (!err) {
+          appendUserMessage("Giải thích lỗi vừa gặp?");
+          setTimeout(() => appendBotMessage("Code hiện tại chưa ghi nhận lỗi. Em hãy bấm <b>'Chạy & Chấm bài'</b> nhé!"), 200);
+          return;
+        }
+        appendUserMessage("Giải thích lỗi vừa gặp?");
+        setTimeout(() => appendBotMessage(`Lỗi <code>${err.msg.split("\n")[0]}</code>: Máy tính không hiểu cú pháp này vì có thể em thiếu ký tự đóng khối (như <code>:</code>) hoặc thụt lề chưa đều.`), 200);
+      } else {
+        appendUserMessage("Gợi ý bước tiếp theo?");
+        setTimeout(() => appendBotMessage(`💡 <b>Gợi ý bước tiếp:</b> Hãy quan sát logic điều kiện hoặc thứ tự tuần tự của các câu lệnh từ trên xuống dưới.`), 200);
+      }
+    }
+
+    function appendUserMessage(text) {
+      const chat = document.getElementById("chatHistory");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "flex items-start justify-end space-x-2";
+      msgDiv.innerHTML = `<div class="bg-indigo-600 text-white p-2.5 rounded-xl rounded-tr-none text-xs leading-relaxed max-w-[85%]">${text}</div>`;
+      chat.appendChild(msgDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function appendBotMessage(html) {
+      const chat = document.getElementById("chatHistory");
+      const msgDiv = document.createElement("div");
+      msgDiv.className = "flex items-start space-x-2";
+      msgDiv.innerHTML = `
+        <div class="w-6 h-6 rounded-full bg-indigo-600/80 flex items-center justify-center text-white text-[10px] flex-shrink-0 mt-0.5">AI</div>
+        <div class="bg-slate-800/90 border border-slate-700/80 p-2.5 rounded-xl rounded-tl-none text-slate-300 leading-relaxed max-w-[90%]">${html}</div>
+      `;
+      chat.appendChild(msgDiv);
+      chat.scrollTop = chat.scrollHeight;
+      lucide.createIcons();
+    }
+  </script>
+</body>
+</html>
