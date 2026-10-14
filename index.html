@@ -15,35 +15,37 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
   <style>
     html, body { height: 100%; margin: 0; padding: 0; overflow: hidden !important; }
-    
-    /* Đồng bộ font và cỡ chữ chuẩn Notepad++ */
-    .code-font {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
-      font-size: 12px;
-      line-height: 20px;
+
+    /* Định dạng font và chiều cao dòng tuyệt đối đồng bộ */
+    .editor-font {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace !important;
+      font-size: 13px !important;
+      line-height: 22px !important;
     }
 
     textarea.code-editor {
       tab-size: 4; -moz-tab-size: 4;
+      white-space: pre !important;
+      word-wrap: normal !important;
     }
 
-    /* Thanh cuộn nhỏ gọn */
+    /* Cột số dòng kiểu Notepad++ */
+    .gutter-lines {
+      user-select: none;
+      color: #64748b;
+      background-color: #090d16;
+      border-right: 1px solid #1e293b;
+      text-align: right;
+      padding: 8px 6px 8px 2px;
+      overflow: hidden;
+      width: 42px;
+      flex-shrink: 0;
+    }
+
     ::-webkit-scrollbar { width: 5px; height: 5px; }
     ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
-
-    /* Cột đánh số dòng kiểu Notepad++ */
-    .line-numbers {
-      user-select: none;
-      color: #64748b;
-      background-color: #0b1120;
-      border-right: 1px solid #1e293b;
-      text-align: right;
-      padding: 8px 8px 8px 4px;
-      white-space: pre-wrap;
-      word-break: normal;
-    }
 
     /* Hiệu ứng đèn LED giao thông */
     .led-light { transition: all 0.25s ease; opacity: 0.2; }
@@ -83,7 +85,7 @@
           <i data-lucide="laptop" class="w-6 h-6"></i>
         </div>
         <h2 class="text-lg font-bold text-white">Điểm danh Trạm Thực Hành</h2>
-        <p class="text-xs text-slate-400 mt-1">Chọn số máy bạn đang ngồi và nhập họ tên để nhận nhiệm vụ</p>
+        <p class="text-xs text-slate-400 mt-1">Chọn số máy đang ngồi và nhập họ tên để nhận nhiệm vụ</p>
       </div>
 
       <div class="space-y-3 text-xs">
@@ -126,14 +128,14 @@
       </div>
       <input type="password" id="studentApiKey" placeholder="Gemini API Key (tùy chọn)..."
              class="text-xs px-3 py-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-300 w-44 focus:outline-none focus:ring-1 focus:ring-blue-500" />
-      <button onclick="runAndGradeCode()" id="runBtn" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center space-x-1.5 shadow-lg shadow-emerald-600/20 transition">
+      <button onclick="runAndGradeCode()" id="runBtn" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center space-x-1.5 shadow-lg shadow-emerald-600/20 transition cursor-pointer">
         <i data-lucide="play" class="w-3.5 h-3.5"></i>
         <span id="runBtnText">Chạy & Chấm bài</span>
       </button>
     </div>
   </header>
 
-  <!-- Workspace Container -->
+  <!-- Workspace Container: Khóa cứng chiều cao 100vh không trôi cuộn -->
   <main class="flex-1 p-3 grid grid-cols-1 lg:grid-cols-12 gap-3 max-w-[1800px] w-full mx-auto min-h-0 overflow-hidden">
     
     <!-- CỘT 1: ĐỀ BÀI (3 cols) -->
@@ -175,10 +177,10 @@
       </div>
     </section>
 
-    <!-- CỘT 2: EDITOR (CÓ SỐ DÒNG NOTEPAD++) & KHUNG STEM SIMULATOR / TERMINAL (5 cols) -->
+    <!-- CỘT 2: EDITOR (CÓ SỐ DÒNG CHUẨN NOTEPAD++) & KHUNG STEM SIMULATOR / TERMINAL (5 cols) -->
     <section class="lg:col-span-5 flex flex-col space-y-3 h-full min-h-0 overflow-hidden">
       
-      <!-- Editor Box với cột đánh số dòng -->
+      <!-- Editor Box -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl flex-1 flex flex-col overflow-hidden shadow-xl min-h-0">
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-2 flex items-center justify-between flex-shrink-0">
           <div class="flex items-center space-x-2">
@@ -188,18 +190,16 @@
           <span class="text-[11px] text-slate-500 font-mono" id="engineTypeBadge">Python 3.x In-Browser</span>
         </div>
 
-        <!-- Khung chứa Cột số dòng và Khung nhập code -->
+        <!-- Khung soạn thảo tích hợp Cột số dòng bên trái -->
         <div class="flex-1 bg-slate-950 flex min-h-0 overflow-hidden relative">
           <!-- Cột đánh số dòng kiểu Notepad++ -->
-          <div id="lineNumbers" class="line-numbers code-font w-10 flex-shrink-0 select-none overflow-hidden text-slate-500">
-            1
-          </div>
-          <!-- Vùng nhập code học sinh -->
+          <div id="lineNumbers" class="gutter-lines editor-font">1</div>
+          <!-- Ô nhập code -->
           <textarea id="codeEditor" 
                     oninput="handleEditorInput()" 
-                    onscroll="syncScroll()"
+                    onscroll="syncEditorScroll()" 
                     spellcheck="false" 
-                    class="code-editor code-font flex-1 p-2 bg-transparent text-emerald-400 focus:outline-none resize-none overflow-y-auto whitespace-pre"></textarea>
+                    class="code-editor editor-font flex-1 p-2 bg-transparent text-emerald-400 focus:outline-none resize-none overflow-y-auto"></textarea>
         </div>
       </div>
 
@@ -269,7 +269,7 @@
         </div>
       </div>
 
-      <!-- Terminal Output Cố định chiều cao (Khi làm bài thuật toán) -->
+      <!-- Terminal Output (Cho bài thuật toán) -->
       <div id="terminalBox" class="h-40 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0">
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
           <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Terminal & Kết quả Testcase</span>
@@ -360,6 +360,7 @@
     function updateLineNumbers() {
       const editor = document.getElementById("codeEditor");
       const lineContainer = document.getElementById("lineNumbers");
+      if (!editor || !lineContainer) return;
       const lines = editor.value.split("\n").length;
       let lineStr = "";
       for (let i = 1; i <= lines; i++) {
@@ -368,10 +369,12 @@
       lineContainer.innerText = lineStr;
     }
 
-    function syncScroll() {
+    function syncEditorScroll() {
       const editor = document.getElementById("codeEditor");
       const lineContainer = document.getElementById("lineNumbers");
-      lineContainer.scrollTop = editor.scrollTop;
+      if (editor && lineContainer) {
+        lineContainer.scrollTop = editor.scrollTop;
+      }
     }
 
     function handleEditorInput() {
@@ -393,7 +396,7 @@
       });
     }
 
-    // Nhận diện loại bài tập cực kỳ nhạy bén (thông qua mã, tiêu đề hoặc code)
+    // Nhận diện loại bài tập thông minh
     function getTaskType(task) {
       if (!task) return "algorithm";
       const code = (task.template || "") + " " + (studentTasksState[task.id]?.code || "");
@@ -613,7 +616,7 @@
       const code = document.getElementById("codeEditor").value;
       if (curTask) studentTasksState[curTask.id].code = code;
 
-      // KIỂM TRA CHÍNH XÁC: NẾU CODE CHỨA HÀM MORSE ➔ TỰ CHUYỂN SANG KHUNG STEM MORSE
+      // KIỂM TRA CHÍNH XÁC: NẾU CODE HOẶC ĐỀ BÀI CÓ CHỨA HÀM MORSE
       const isMorseCode = code.includes("morse_dot") || code.includes("morse_dash") || (curTask && (curTask.title + curTask.desc).toLowerCase().includes("morse"));
       const isTrafficCode = code.includes("led_red") || code.includes("led_yellow") || code.includes("led_green");
 
@@ -633,7 +636,7 @@
         return;
       }
 
-      // NẾU LÀ BÀI THUẬT TOÁN TIÊU CHUẨN
+      // THUẬT TOÁN PYTHON TIÊU CHUẨN
       const consoleEl = document.getElementById("outputConsole");
       consoleEl.innerText = `Đang chấm [${curTask.title.split(":")[0]}]...\n`;
 
@@ -649,7 +652,7 @@
         }
       });
 
-      // Tiêm khai báo an toàn
+      // Tiêm sẵn hàm an toàn vào Skulpt để tránh NameError
       const codeToRun = `
 def sleep(s): pass
 def morse_dot(): pass
@@ -734,7 +737,6 @@ def morse_dash(): pass
       const signalText = document.getElementById("morseLiveSignal");
       signalText.innerText = "";
 
-      // Kiểm tra lỗi viết hoa chữ For
       if (code.includes("For i in") || code.includes("For ")) {
         appendBotMessage("⚠️ <b>Lỗi cú pháp Python:</b> Từ khóa vòng lặp trong Python phải viết thường là <code>for</code>, không viết hoa chữ <code>For</code> em nhé!");
         runBtnText.innerText = "Chạy & Chấm bài";
