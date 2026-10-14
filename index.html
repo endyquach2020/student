@@ -112,7 +112,7 @@
     </div>
   </header>
 
-  <!-- Workspace Container -->
+  <!-- Workspace Container: Khóa cứng chiều cao 100vh không trôi cuộn -->
   <main class="flex-1 p-3 grid grid-cols-1 lg:grid-cols-12 gap-3 max-w-[1800px] w-full mx-auto min-h-0 overflow-hidden">
     
     <!-- CỘT 1: ĐỀ BÀI (3 cols) -->
@@ -154,7 +154,7 @@
       </div>
     </section>
 
-    <!-- CỘT 2: EDITOR & STEM SIMULATOR / TERMINAL (5 cols) -->
+    <!-- CỘT 2: EDITOR & KHUNG STEM SIMULATOR / TERMINAL (5 cols) -->
     <section class="lg:col-span-5 flex flex-col space-y-3 h-full min-h-0 overflow-hidden">
       <!-- Editor Box -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl flex-1 flex flex-col overflow-hidden shadow-xl min-h-0">
@@ -171,7 +171,7 @@
         </div>
       </div>
 
-      <!-- KHUNG STEM 1: ĐÈN GIAO THÔNG -->
+      <!-- KHUNG STEM 1: MÔ HÌNH ĐÈN GIAO THÔNG -->
       <div id="stemTrafficBox" class="h-44 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0 hidden">
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
           <div class="flex items-center space-x-2">
@@ -208,7 +208,7 @@
         </div>
       </div>
 
-      <!-- KHUNG STEM 2: MÃ MORSE SOS -->
+      <!-- KHUNG STEM 2: MÔ HÌNH MÃ MORSE SOS -->
       <div id="stemMorseBox" class="h-44 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0 hidden">
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
           <div class="flex items-center space-x-2">
@@ -237,7 +237,7 @@
         </div>
       </div>
 
-      <!-- Terminal Output (Cho bài thuật toán) -->
+      <!-- Terminal Output Cố định chiều cao (Khi làm bài thuật toán thông thường) -->
       <div id="terminalBox" class="h-40 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl flex-shrink-0">
         <div class="bg-slate-900/90 border-b border-slate-800 px-4 py-1.5 flex items-center justify-between flex-shrink-0">
           <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Terminal & Kết quả Testcase</span>
@@ -260,6 +260,7 @@
         </div>
       </div>
 
+      <!-- Vùng tin nhắn tự cuộn nội bộ -->
       <div id="chatHistory" class="flex-1 p-3 overflow-y-auto space-y-2.5 bg-slate-950/50 text-xs min-h-0">
         <div class="flex items-start space-x-2">
           <div class="w-6 h-6 rounded-full bg-indigo-600/80 flex items-center justify-center text-white text-[10px] flex-shrink-0 mt-0.5">AI</div>
@@ -269,6 +270,7 @@
         </div>
       </div>
 
+      <!-- Nút gợi ý nhanh & Ô gõ tin nhắn -->
       <div class="p-2.5 border-t border-slate-800 bg-slate-900 space-y-2 flex-shrink-0">
         <div class="flex space-x-1.5 overflow-x-auto pb-1 text-[11px]">
           <button onclick="askQuickPrompt('explain')" class="whitespace-nowrap px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md border border-slate-700">
@@ -363,12 +365,14 @@
       });
     }
 
-    // Nhận diện loại bài tập thông minh
+    // Nhận diện loại bài tập thông minh: dựa trên type hoặc từ khóa trong tiêu đề/code
     function getTaskType(task) {
-      if (task.type) return task.type;
-      const lower = (task.title + " " + task.desc).toLowerCase();
-      if (lower.includes("morse") || lower.includes("sos")) return "stem_morse";
-      if (lower.includes("đèn giao thông") || lower.includes("traffic")) return "stem_traffic";
+      if (!task) return "algorithm";
+      const code = task.template || "";
+      const text = ((task.type || "") + " " + (task.title || "") + " " + (task.desc || "") + " " + code).toLowerCase();
+      
+      if (text.includes("morse") || text.includes("sos") || text.includes("morse_dot")) return "stem_morse";
+      if (text.includes("đèn giao thông") || text.includes("traffic") || text.includes("led_red")) return "stem_traffic";
       return "algorithm";
     }
 
@@ -550,19 +554,27 @@
     async function runAndGradeCode() {
       const curTask = assignments[currentTaskIndex];
       const code = document.getElementById("codeEditor").value;
-      studentTasksState[curTask.id].code = code;
+      if (curTask) studentTasksState[curTask.id].code = code;
 
-      const type = getTaskType(curTask);
+      // KIỂM TRA TỰ ĐỘNG THEO NỘI DUNG CODE ĐỂ TRÁNH LỖI NameError
+      const isMorseCode = code.includes("morse_dot") || code.includes("morse_dash");
+      const isTrafficCode = code.includes("led_red") || code.includes("led_yellow") || code.includes("led_green");
 
-      // 1. XỬ LÝ STEM ĐÈN GIAO THÔNG
-      if (type === "stem" || type === "stem_traffic") {
-        runTrafficSimulation(code, curTask);
+      // 1. TỰ ĐỘNG CHUYỂN HƯỚNG SANG STEM MORSE NẾU CÓ HÀM MORSE
+      if (isMorseCode || getTaskType(curTask) === "stem_morse") {
+        document.getElementById("stemMorseBox").classList.remove("hidden");
+        document.getElementById("terminalBox").classList.add("hidden");
+        document.getElementById("stemTrafficBox").classList.add("hidden");
+        runMorseSimulation(code, curTask);
         return;
       }
 
-      // 2. XỬ LÝ STEM MÃ MORSE SOS
-      if (type === "stem_morse") {
-        runMorseSimulation(code, curTask);
+      // 2. TỰ ĐỘNG CHUYỂN HƯỚNG SANG STEM GIAO THÔNG
+      if (isTrafficCode || getTaskType(curTask) === "stem_traffic" || getTaskType(curTask) === "stem") {
+        document.getElementById("stemTrafficBox").classList.remove("hidden");
+        document.getElementById("terminalBox").classList.add("hidden");
+        document.getElementById("stemMorseBox").classList.add("hidden");
+        runTrafficSimulation(code, curTask);
         return;
       }
 
@@ -582,17 +594,24 @@
         }
       });
 
-      // Tiêm các hàm giả lập để tránh NameError nếu học sinh có gọi nhầm
+      // Tiêm các hàm dự phòng để Skulpt không bao giờ vấp phải NameError
       const codeToRun = `
 def sleep(s): pass
 def morse_dot(): pass
 def morse_dash(): pass
+class MockLed:
+    def on(self): pass
+    def off(self): pass
+led_red = MockLed()
+led_yellow = MockLed()
+led_green = MockLed()
+def led_all_off(): pass
 ` + code;
 
       Sk.misceval.asyncToPromise(() => Sk.importMainWithBody("<stdin>", false, codeToRun, true))
         .then(() => {
           const cleanOutput = outputBuffer.trim().replace(/\r/g, "");
-          const expected = curTask.expectedOutput.trim();
+          const expected = (curTask.expectedOutput || "").trim();
 
           if (cleanOutput === expected || cleanOutput.endsWith(expected)) {
             consoleEl.innerText += `\n\n[CHÍNH XÁC] Kết quả khớp hoàn toàn (${cleanOutput} == ${expected})!`;
@@ -659,7 +678,7 @@ def morse_dash(): pass
       }
     }
 
-    // Mô phỏng Morse SOS (Chạy thực tế & Bắn chuỗi xung lên đèn SOS D10)
+    // Mô phỏng Morse SOS (Chạy phát sáng trực quan)
     async function runMorseSimulation(code, curTask) {
       const runBtnText = document.getElementById("runBtnText");
       runBtnText.innerText = "Đang phát tín hiệu SOS...";
